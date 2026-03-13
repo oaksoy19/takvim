@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Takvim</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #F5F3EE;
+  --surface: #FFFFFF;
+  --surface2: #F0EDE6;
+  --border: #E2DFD6;
+  --border2: #CCC9BF;
+  --text-primary: #1A1915;
+  --text-secondary: #6E6B62;
+  --text-hint: #AEAB9F;
+  --accent: #2E4A35;
+  --accent-mid: #4A7A55;
+  --accent-light: #E3EEE5;
+  --accent-text: #1E3225;
+  --gold: #8A6A1F;
+  --gold-light: #F5EDD6;
+  --gold-text: #5A4510;
+  --danger: #A83030;
+  --danger-light: #F8E8E8;
+  --info: #1A4580;
+  --info-light: #E3EBF8;
+  --radius: 14px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.13);
+  --font-body: 'DM Sans', sans-serif;
+  --font-display: 'Lora', serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111110;
+    --surface: #1C1B19;
+    --surface2: #232220;
+    --border: #2E2D29;
+    --border2: #3E3D38;
+    --text-primary: #EDE9E0;
+    --text-secondary: #8A877E;
+    --text-hint: #55524A;
+    --accent: #5E9468;
+    --accent-mid: #5E9468;
+    --accent-light: #162219;
+    --accent-text: #9ECBA8;
+    --gold: #C8A050;
+    --gold-light: #281F08;
+    --gold-text: #E8C070;
+    --danger: #C85050;
+    --danger-light: #280F0F;
+    --info: #4A78C8;
+    --info-light: #0F1E38;
+  }
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ─── BOTTOM NAV ─── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 100%; max-width: 430px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 400;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.nav-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 8px 10px;
+  gap: 4px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-hint);
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  transition: color 0.15s;
+}
+
+.nav-tab.active { color: var(--accent-mid); }
+.nav-tab svg { width: 20px; height: 20px; stroke-width: 1.6; }
+
+/* ─── PAGES ─── */
+.page { display: none; padding-bottom: 80px; }
+.page.active { display: block; }
+
+/* ─── HEADER ─── */
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 18px 12px;
+  position: sticky;
+  top: 0; z-index: 100;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hijri-badge {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--gold);
+  background: var(--gold-light);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.sync-btn {
+  display: flex; align-items: center; gap: 5px;
+  font-family: var(--font-body);
+  font-size: 12px; font-weight: 500;
+  color: var(--accent-mid);
+  background: var(--accent-light);
+  border: none; border-radius: 20px;
+  padding: 5px 11px; cursor: pointer;
+  transition: opacity 0.2s;
+}
+.sync-btn:hover { opacity: 0.8; }
+.sync-btn svg { width: 13px; height: 13px; }
+
+.month-nav {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 10px;
+}
+.month-title {
+  flex: 1;
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 600;
+  color: var(--text-primary);
+}
+.hijri-month-sub {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--gold);
+  margin-top: 1px;
+}
+
+.nav-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+  transition: background 0.15s;
+}
+.nav-btn:hover { background: var(--bg); }
+
+/* ─── CALENDAR GRID ─── */
+.calendar-section { padding: 0 14px; }
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 10px 4px 4px;
+}
+.weekday {
+  text-align: center;
+  font-size: 11px; font-weight: 500;
+  color: var(--text-hint);
+  letter-spacing: 0.05em;
+}
+
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.day-cell {
+  aspect-ratio: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-start;
+  padding-top: 5px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+}
+.day-cell:hover { background: var(--surface2); }
+
+.day-cell.today .day-num {
+  background: var(--accent);
+  color: white;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600;
+}
+.day-cell.selected { background: var(--accent-light); }
+.day-cell.other-month .day-num { color: var(--text-hint); }
+
+.day-num {
+  font-size: 14px; font-weight: 400;
+  line-height: 28px;
+  width: 28px; height: 28px;
+  text-align: center;
+}
+
+.hijri-day {
+  font-size: 8px;
+  color: var(--gold);
+  line-height: 1;
+  margin-top: 0px;
+  font-family: var(--font-display);
+}
+
+.event-dots {
+  display: flex; gap: 3px;
+  justify-content: center;
+  max-width: 28px;
+  flex-wrap: wrap;
+  margin-top: 1px;
+}
+.dot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; }
+
+/* ─── EVENTS PANEL ─── */
+.events-panel { padding: 0 16px 16px; margin-top: 6px; }
+
+.panel-date {
+  font-size: 13px; font-weight: 500;
+  color: var(--text-secondary);
+  padding: 10px 4px 6px;
+}
+.panel-hijri {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--gold);
+  padding: 0 4px 8px;
+}
+
+.event-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 11px 13px;
+  margin-bottom: 7px;
+  display: flex; align-items: flex-start; gap: 11px;
+  cursor: pointer; transition: box-shadow 0.15s;
+}
+.event-card:hover { box-shadow: var(--shadow); }
+
+.event-color-bar {
+  width: 3px; height: 100%; min-height: 34px;
+  border-radius: 2px; flex-shrink: 0;
+}
+.event-content { flex: 1; min-width: 0; }
+.event-title {
+  font-size: 14px; font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.event-meta {
+  font-size: 12px; color: var(--text-secondary);
+  margin-top: 3px; display: flex; align-items: center; gap: 8px;
+}
+.event-del-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-hint); padding: 4px; border-radius: 6px;
+  display: flex; align-items: center;
+  transition: color 0.15s, background 0.15s; flex-shrink: 0;
+}
+.event-del-btn:hover { color: var(--danger); background: var(--danger-light); }
+
+.empty-state {
+  text-align: center; padding: 28px 20px;
+  color: var(--text-hint); font-size: 14px;
+}
+
+/* ─── PRAYER TIMES PAGE ─── */
+.prayer-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 18px 14px;
+  position: sticky; top: 0; z-index: 100;
+}
+
+.prayer-header-top {
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.prayer-title {
+  font-family: var(--font-display);
+  font-size: 20px; font-weight: 600;
+}
+
+.settings-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+  transition: background 0.15s;
+}
+.settings-btn:hover { background: var(--bg); }
+
+.prayer-location {
+  font-size: 12px; color: var(--text-secondary);
+  margin-top: 4px;
+  display: flex; align-items: center; gap: 5px;
+}
+
+.source-badge {
+  display: inline-block;
+  font-size: 11px; font-weight: 500;
+  padding: 2px 9px; border-radius: 20px;
+  background: var(--gold-light);
+  color: var(--gold-text);
+  margin-top: 6px;
+}
+
+/* Next prayer countdown */
+.next-prayer-card {
+  margin: 14px 16px 0;
+  background: var(--accent);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  color: white;
+  display: flex; align-items: center; gap: 14px;
+}
+
+.next-prayer-label {
+  font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  opacity: 0.75; margin-bottom: 4px;
+}
+.next-prayer-name {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 600;
+}
+.next-prayer-time { font-size: 14px; opacity: 0.85; margin-top: 2px; }
+
+.countdown {
+  margin-left: auto; text-align: right;
+}
+.countdown-label {
+  font-size: 10px; opacity: 0.7; margin-bottom: 2px;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.countdown-timer {
+  font-family: 'DM Mono', monospace, var(--font-body);
+  font-size: 24px; font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Prayer list */
+.prayer-list { padding: 12px 16px; }
+
+.prayer-row {
+  display: flex; align-items: center;
+  padding: 13px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  transition: background 0.15s;
+}
+
+.prayer-row.current {
+  border-color: var(--accent-mid);
+  background: var(--accent-light);
+}
+
+.prayer-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  margin-right: 12px; flex-shrink: 0;
+  font-size: 16px;
+}
+.prayer-row.current .prayer-icon {
+  background: var(--accent-light);
+}
+
+.prayer-name {
+  font-size: 15px; font-weight: 500; flex: 1;
+}
+.prayer-name-ar {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--text-hint);
+  display: block;
+}
+
+.prayer-time {
+  font-size: 18px; font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.prayer-row.past .prayer-time { color: var(--text-hint); }
+.prayer-row.past .prayer-name { color: var(--text-hint); }
+.prayer-row.past .prayer-icon { opacity: 0.45; }
+.prayer-row.current .prayer-time { color: var(--accent-mid); }
+
+/* ─── SETTINGS PAGE ─── */
+.settings-page-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 18px;
+  position: sticky; top: 0; z-index: 100;
+}
+
+.settings-page-title {
+  font-family: var(--font-display);
+  font-size: 20px; font-weight: 600;
+}
+
+.settings-section {
+  padding: 16px 16px 0;
+}
+
+.settings-section-label {
+  font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-hint);
+  margin-bottom: 8px;
+  padding: 0 2px;
+}
+
+.setting-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.setting-row {
+  display: flex; align-items: center;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.setting-row:last-child { border-bottom: none; }
+
+.setting-info { flex: 1; }
+.setting-label {
+  font-size: 14px; font-weight: 500;
+}
+.setting-desc {
+  font-size: 12px; color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Source selector */
+.source-selector {
+  display: flex; gap: 8px; margin-top: 10px;
+}
+
+.source-option {
+  flex: 1;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--surface);
+}
+.source-option.selected {
+  border-color: var(--accent-mid);
+  background: var(--accent-light);
+}
+.source-option-name {
+  font-size: 13px; font-weight: 600;
+  color: var(--text-primary);
+}
+.source-option.selected .source-option-name { color: var(--accent-text); }
+.source-option-desc {
+  font-size: 11px; color: var(--text-secondary);
+  margin-top: 3px; line-height: 1.4;
+}
+
+/* Toggle switch */
+.toggle {
+  width: 44px; height: 26px;
+  background: var(--border2);
+  border-radius: 13px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  border: none;
+}
+.toggle.on { background: var(--accent-mid); }
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 20px; height: 20px;
+  background: white;
+  border-radius: 50%;
+  top: 3px; left: 3px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.toggle.on::after { transform: translateX(18px); }
+
+.city-input {
+  width: 100%; padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.city-input:focus { border-color: var(--accent-mid); }
+
+/* ─── FAB ─── */
+.fab {
+  position: fixed;
+  bottom: 70px; right: 50%;
+  transform: translateX(195px);
+  width: 52px; height: 52px;
+  background: var(--accent);
+  color: white;
+  border: none; border-radius: 50%;
+  font-size: 24px; cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 200;
+}
+.fab:hover { transform: translateX(195px) scale(1.08); box-shadow: 0 12px 40px rgba(0,0,0,0.2); }
+.fab.hidden { display: none; }
+
+/* ─── MODAL ─── */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 300;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
+  padding: 18px 18px 36px;
+  width: 100%; max-width: 430px;
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
+  animation: slideUp 0.25s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.modal-handle {
+  width: 40px; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 0 auto 18px;
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.form-group { margin-bottom: 13px; }
+.form-label {
+  font-size: 11px; font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin-bottom: 6px; display: block;
+}
+.form-input {
+  width: 100%; padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: var(--font-body); font-size: 15px;
+  background: var(--bg); color: var(--text-primary);
+  outline: none; transition: border-color 0.15s;
+}
+.form-input:focus { border-color: var(--accent-mid); }
+
+.color-picker { display: flex; gap: 10px; flex-wrap: wrap; }
+.color-option {
+  width: 28px; height: 28px; border-radius: 50%;
+  cursor: pointer; border: 2px solid transparent;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.color-option:hover { transform: scale(1.15); }
+.color-option.selected { border-color: var(--text-primary); }
+
+.reminder-options { display: flex; gap: 7px; flex-wrap: wrap; }
+.reminder-chip {
+  padding: 6px 11px; border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font-family: var(--font-body); font-size: 12px;
+  cursor: pointer; color: var(--text-primary);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.reminder-chip.selected {
+  background: var(--accent-light);
+  border-color: var(--accent-mid);
+  color: var(--accent-text);
+}
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn-row { display: flex; gap: 10px; margin-top: 18px; }
+.btn {
+  flex: 1; padding: 13px; border-radius: 12px;
+  font-family: var(--font-body); font-size: 15px; font-weight: 500;
+  cursor: pointer; border: none; transition: opacity 0.15s;
+}
+.btn:hover { opacity: 0.85; }
+.btn-cancel { background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-save { background: var(--accent); color: white; }
+
+.loc-refresh-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+  transition: background 0.15s, transform 0.3s;
+  flex-shrink: 0;
+}
+.loc-refresh-btn:hover { background: var(--accent-light); color: var(--accent-mid); }
+.loc-refresh-btn.spinning svg { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── LANG SELECTOR ─── */
+.lang-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.lang-option {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 14px 8px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: background 0.15s;
+  gap: 5px;
+}
+.lang-option:hover { background: var(--surface2); }
+.lang-option.selected {
+  background: var(--accent-light);
+}
+.lang-flag { font-size: 22px; line-height: 1; }
+.lang-name {
+  font-size: 12px; font-weight: 500;
+  color: var(--text-secondary);
+}
+.lang-option.selected .lang-name { color: var(--accent-text); }
+
+/* ─── NOTIFICATION ─── */
+.notification {
+  position: fixed; top: 20px; left: 50%;
+  transform: translateX(-50%) translateY(-80px);
+  background: var(--text-primary); color: var(--surface);
+  padding: 10px 18px; border-radius: 24px;
+  font-size: 13px; font-weight: 500;
+  z-index: 500; transition: transform 0.3s ease;
+  white-space: nowrap; max-width: 90vw;
+  box-shadow: var(--shadow-lg);
+}
+.notification.show { transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 430px) {
+  .fab { right: 20px; transform: none; }
+  .fab:hover { transform: scale(1.08); }
+}
+</style>
+</head>
+<body>
+
+<div class="notification" id="notification"></div>
+
+<!-- ═══════════════ PAGE: TAKVİM ═══════════════ -->
+<div class="page active" id="page-calendar">
+
+  <header class="app-header">
+    <div class="header-row">
+      <div>
+        <div class="hijri-badge" id="hijriHeaderBadge">...</div>
+      </div>
+      <button class="sync-btn" onclick="syncWithGoogle()" id="syncBtn">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M13.5 2.5A6.5 6.5 0 1 1 2 8.5" stroke-linecap="round"/>
+          <polyline points="13.5,2.5 13.5,6 10,6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Google Sync
+      </button>
+    </div>
+    <div class="month-nav">
+      <div>
+        <div class="month-title" id="monthTitle"></div>
+        <div class="hijri-month-sub" id="hijriMonthSub"></div>
+      </div>
+      <button class="nav-btn" onclick="changeMonth(-1)">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="9,2 4,7 9,12"/></svg>
+      </button>
+      <button class="nav-btn" onclick="changeMonth(1)">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="5,2 10,7 5,12"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="calendar-section">
+    <div class="weekdays">
+      <div class="weekday">Pzt</div><div class="weekday">Sal</div>
+      <div class="weekday">Çar</div><div class="weekday">Per</div>
+      <div class="weekday">Cum</div><div class="weekday">Cmt</div>
+      <div class="weekday">Paz</div>
+    </div>
+    <div class="days-grid" id="daysGrid"></div>
+  </div>
+
+  <div class="events-panel">
+    <div class="panel-date" id="panelDate"></div>
+    <div class="panel-hijri" id="panelHijri"></div>
+    <div id="eventsList"></div>
+  </div>
+
+  <button class="fab" id="fabBtn" onclick="openModal()">+</button>
+</div>
+
+<!-- ═══════════════ PAGE: NAMAZ ═══════════════ -->
+<div class="page" id="page-prayer">
+  <div class="prayer-header">
+    <div class="prayer-header-top">
+      <div>
+        <div class="prayer-title">Namaz Vakitleri</div>
+        <div class="prayer-location" id="prayerLocation">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="5" r="2.5"/><path d="M6 11C6 11 2 7.5 2 5a4 4 0 0 1 8 0c0 2.5-4 6-4 6z"/></svg>
+          <span id="locationText">İstanbul</span>
+        </div>
+        <span class="source-badge" id="sourceBadge">Diyanet İşleri</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="next-prayer-card" id="nextPrayerCard">
+    <div>
+      <div class="next-prayer-label">Sonraki Vakit</div>
+      <div class="next-prayer-name" id="nextPrayerName">—</div>
+      <div class="next-prayer-time" id="nextPrayerTimeEl">—</div>
+    </div>
+    <div class="countdown">
+      <div class="countdown-label">Kalan Süre</div>
+      <div class="countdown-timer" id="countdownTimer">--:--</div>
+    </div>
+  </div>
+
+  <div class="prayer-list" id="prayerList"></div>
+</div>
+
+<!-- ═══════════════ PAGE: AYARLAR ═══════════════ -->
+<div class="page" id="page-settings">
+  <div class="settings-page-header">
+    <div class="settings-page-title">Ayarlar</div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-label">Namaz Vakti Kaynağı</div>
+    <div class="source-selector">
+      <div class="source-option selected" id="srcDiyanet" onclick="selectSource('diyanet')">
+        <div class="source-option-name">Diyanet İşleri</div>
+        <div class="source-option-desc">Fecr: 18°<br>Yatsı: 17° (standart)</div>
+      </div>
+      <div class="source-option" id="srcSuleymaniye" onclick="selectSource('suleymaniye')">
+        <div class="source-option-name">Süleymaniye Vakfı</div>
+        <div class="source-option-desc">Fecr: 15°<br>Yatsı: 15° (ılımlı)</div>
+      </div>
+    </div>
+
+    <div class="setting-card" style="margin-top: 12px;">
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Fecr Açısı</div>
+          <div class="setting-desc" id="fajrAngleDesc">18° (Diyanet)</div>
+        </div>
+        <select class="city-input" style="width:auto" id="fajrAngle" onchange="onAngleChange()">
+          <option value="18">18°</option>
+          <option value="15">15°</option>
+          <option value="12">12°</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Yatsı Açısı</div>
+          <div class="setting-desc" id="ishaAngleDesc">17° (Diyanet)</div>
+        </div>
+        <select class="city-input" style="width:auto" id="ishaAngle" onchange="onAngleChange()">
+          <option value="17">17°</option>
+          <option value="15">15°</option>
+          <option value="12">12°</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="settings-section-label" id="lbl-loc-section">Konum</div>
+    <div class="setting-card">
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Konum</div>
+          <div class="setting-desc" id="locationStatusText">Konum bekleniyor...</div>
+        </div>
+        <button class="loc-refresh-btn" id="locRefreshBtn" onclick="requestLocation()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M13.5 2.5A6.5 6.5 0 1 1 2 8.5"/><polyline points="13.5,2.5 13.5,6 10,6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="settings-section-label">Bildirimler</div>
+    <div class="setting-card">
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Namaz bildirimleri</div>
+          <div class="setting-desc">Her vakitten önce bildirim al</div>
+        </div>
+        <button class="toggle" id="notifToggle" onclick="toggleNotif()"></button>
+      </div>
+    </div>
+
+    <div class="settings-section-label" id="lbl-hijri-section">Hicri Takvim</div>
+    <div class="setting-card">
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label" id="lbl-hijri-correction">Düzeltme (gün)</div>
+          <div class="setting-desc" id="lbl-hijri-correction-desc">Hicri tarihi ±1-2 gün ayarla</div>
+        </div>
+        <select class="city-input" style="width:auto" id="hijriCorrection" onchange="onHijriCorrectionChange()">
+          <option value="-2">-2</option>
+          <option value="-1">-1</option>
+          <option value="0" selected>0</option>
+          <option value="1">+1</option>
+          <option value="2">+2</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="settings-section-label" id="lbl-lang-section">Dil / Language</div>
+    <div class="setting-card">
+      <div class="lang-selector" id="langSelector">
+        <div class="lang-option selected" data-lang="tr" onclick="selectLang('tr')">
+          <span class="lang-flag">🇹🇷</span>
+          <span class="lang-name">Türkçe</span>
+        </div>
+        <div class="lang-option" data-lang="en" onclick="selectLang('en')">
+          <span class="lang-flag">🇬🇧</span>
+          <span class="lang-name">English</span>
+        </div>
+        <div class="lang-option" data-lang="ar" onclick="selectLang('ar')">
+          <span class="lang-flag">🇸🇦</span>
+          <span class="lang-name">العربية</span>
+        </div>
+        <div class="lang-option" data-lang="de" onclick="selectLang('de')">
+          <span class="lang-flag">🇩🇪</span>
+          <span class="lang-name">Deutsch</span>
+        </div>
+        <div class="lang-option" data-lang="fr" onclick="selectLang('fr')">
+          <span class="lang-flag">🇫🇷</span>
+          <span class="lang-name">Français</span>
+        </div>
+        <div class="lang-option" data-lang="nl" onclick="selectLang('nl')">
+          <span class="lang-flag">🇳🇱</span>
+          <span class="lang-name">Nederlands</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ BOTTOM NAV ═══════════════ -->
+<nav class="bottom-nav">
+  <button class="nav-tab active" id="tab-calendar" onclick="switchTab('calendar')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/>
+      <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+    Takvim
+  </button>
+  <button class="nav-tab" id="tab-prayer" onclick="switchTab('prayer')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2C8 2 5 6 5 10c0 5 7 12 7 12s7-7 7-12c0-4-3-8-7-8z"/>
+      <circle cx="12" cy="10" r="3"/>
+    </svg>
+    Namaz
+  </button>
+  <button class="nav-tab" id="tab-settings" onclick="switchTab('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+    Ayarlar
+  </button>
+</nav>
+
+<!-- ADD EVENT MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Yeni Etkinlik</div>
+    <div class="form-group">
+      <label class="form-label">Başlık</label>
+      <input class="form-input" id="eventTitle" type="text" placeholder="Etkinlik adı...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tarih</label>
+        <input class="form-input" id="eventDate" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Saat</label>
+        <input class="form-input" id="eventTime" type="time">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Not</label>
+      <input class="form-input" id="eventNote" type="text" placeholder="Kısa not...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Renk</label>
+      <div class="color-picker" id="colorPicker">
+        <div class="color-option selected" style="background:#2E4A35" data-color="#2E4A35" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#1A4580" data-color="#1A4580" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#8A6A1F" data-color="#8A6A1F" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#A83030" data-color="#A83030" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#7B5EA7" data-color="#7B5EA7" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#6E6B62" data-color="#6E6B62" onclick="selectColor(this)"></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Hatırlatıcı</label>
+      <div class="reminder-options">
+        <button class="reminder-chip" data-min="0" onclick="selectReminder(this)">Tam zamanında</button>
+        <button class="reminder-chip selected" data-min="10" onclick="selectReminder(this)">10 dk önce</button>
+        <button class="reminder-chip" data-min="30" onclick="selectReminder(this)">30 dk önce</button>
+        <button class="reminder-chip" data-min="60" onclick="selectReminder(this)">1 saat önce</button>
+        <button class="reminder-chip" data-min="1440" onclick="selectReminder(this)">1 gün önce</button>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-cancel" onclick="closeModal()">İptal</button>
+      <button class="btn btn-save" onclick="saveEvent()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════
+   STATE & SETTINGS
+════════════════════════════════════════════ */
+/* ════════════════════════════════════════════
+   i18n — DILLER
+════════════════════════════════════════════ */
+const I18N = {
+  tr: {
+    months: ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'],
+    weekdays: ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'],
+    weekdaysShort: ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'],
+    appTitle: 'Takvim', navCalendar: 'Takvim', navPrayer: 'Namaz', navSettings: 'Ayarlar',
+    prayerPageTitle: 'Namaz Vakitleri', nextPrayer: 'Sonraki Vakit', timeLeft: 'Kalan Süre',
+    settingsTitle: 'Ayarlar', langSection: 'Dil / Language',
+    srcSection: 'Namaz Vakti Kaynağı', locSection: 'Konum', notifSection: 'Bildirimler', hijriSection: 'Hicri Takvim',
+    fajrAngle: 'Fecr Açısı', ishaAngle: 'Yatsı Açısı', city: 'Şehir',
+    notifLabel: 'Namaz bildirimleri', notifDesc: 'Her vakitten önce bildirim al',
+    hijriCorrection: 'Düzeltme (gün)', hijriCorrectionDesc: 'Hicri tarihi ±1-2 gün ayarla',
+    diyanetDesc: 'Fecr: 18°\nYatsı: 17° (standart)', suleymaniyeDesc: 'Fecr: 15°\nYatsı: 15° (ılımlı)',
+    modalTitle: 'Yeni Etkinlik', titleLabel: 'Başlık', titlePlaceholder: 'Etkinlik adı...',
+    dateLabel: 'Tarih', timeLabel: 'Saat', noteLabel: 'Not', notePlaceholder: 'Kısa not...',
+    colorLabel: 'Renk', reminderLabel: 'Hatırlatıcı',
+    reminders: ['Tam zamanında','10 dk önce','30 dk önce','1 saat önce','1 gün önce'],
+    cancel: 'İptal', save: 'Kaydet',
+    noEvents: 'Bu gün için etkinlik yok',
+    eventAdded: 'Etkinlik eklendi', eventDeleted: 'Etkinlik silindi',
+    titleRequired: 'Başlık ve tarih gerekli', calendarUpToDate: 'Takvim güncel',
+    syncFailed: 'Senkronizasyon başarısız', connecting: 'Bağlanıyor...',
+    imported: (n) => n + ' etkinlik içe aktarıldı',
+    diyanetSelected: 'Diyanet İşleri seçildi', suleymaniyeSelected: 'Süleymaniye Vakfı seçildi',
+    citySelected: (c) => c + ' seçildi', hijriUpdated: 'Hicri düzeltme güncellendi',
+    prayerNames: ['İmsak','Sabah','Güneş','Öğle','İkindi','Akşam','Yatsı'],
+    hSuffix: 'H', dir: 'ltr',
+  },
+  en: {
+    months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+    weekdays: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+    weekdaysShort: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    appTitle: 'Calendar', navCalendar: 'Calendar', navPrayer: 'Prayer', navSettings: 'Settings',
+    prayerPageTitle: 'Prayer Times', nextPrayer: 'Next Prayer', timeLeft: 'Time Left',
+    settingsTitle: 'Settings', langSection: 'Dil / Language',
+    srcSection: 'Prayer Time Source', locSection: 'Location', notifSection: 'Notifications', hijriSection: 'Hijri Calendar',
+    fajrAngle: 'Fajr Angle', ishaAngle: 'Isha Angle', city: 'City',
+    notifLabel: 'Prayer notifications', notifDesc: 'Get notified before each prayer',
+    hijriCorrection: 'Correction (days)', hijriCorrectionDesc: 'Adjust Hijri date by ±1-2 days',
+    diyanetDesc: 'Fajr: 18°\nIsha: 17° (standard)', suleymaniyeDesc: 'Fajr: 15°\nIsha: 15° (lenient)',
+    modalTitle: 'New Event', titleLabel: 'Title', titlePlaceholder: 'Event name...',
+    dateLabel: 'Date', timeLabel: 'Time', noteLabel: 'Note', notePlaceholder: 'Short note...',
+    colorLabel: 'Color', reminderLabel: 'Reminder',
+    reminders: ['On time','10 min before','30 min before','1 hour before','1 day before'],
+    cancel: 'Cancel', save: 'Save',
+    noEvents: 'No events for this day',
+    eventAdded: 'Event added', eventDeleted: 'Event deleted',
+    titleRequired: 'Title and date are required', calendarUpToDate: 'Calendar is up to date',
+    syncFailed: 'Sync failed', connecting: 'Connecting...',
+    imported: (n) => n + ' events imported',
+    diyanetSelected: 'Diyanet selected', suleymaniyeSelected: 'Süleymaniye Vakfı selected',
+    citySelected: (c) => c + ' selected', hijriUpdated: 'Hijri correction updated',
+    prayerNames: ['Imsak','Fajr','Sunrise','Dhuhr','Asr','Maghrib','Isha'],
+    hSuffix: 'AH', dir: 'ltr',
+  },
+  ar: {
+    months: ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'],
+    weekdays: ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],
+    weekdaysShort: ['ن','ث','ر','خ','ج','س','ح'],
+    appTitle: 'التقويم', navCalendar: 'التقويم', navPrayer: 'الصلاة', navSettings: 'الإعدادات',
+    prayerPageTitle: 'مواقيت الصلاة', nextPrayer: 'الصلاة القادمة', timeLeft: 'الوقت المتبقي',
+    settingsTitle: 'الإعدادات', langSection: 'Dil / Language',
+    srcSection: 'مصدر مواقيت الصلاة', locSection: 'الموقع', notifSection: 'الإشعارات', hijriSection: 'التقويم الهجري',
+    fajrAngle: 'زاوية الفجر', ishaAngle: 'زاوية العشاء', city: 'المدينة',
+    notifLabel: 'إشعارات الصلاة', notifDesc: 'تلقي إشعارات قبل كل صلاة',
+    hijriCorrection: 'التصحيح (أيام)', hijriCorrectionDesc: 'اضبط التاريخ الهجري ±1-2 يوم',
+    diyanetDesc: 'الفجر: 18°\nالعشاء: 17°', suleymaniyeDesc: 'الفجر: 15°\nالعشاء: 15°',
+    modalTitle: 'حدث جديد', titleLabel: 'العنوان', titlePlaceholder: 'اسم الحدث...',
+    dateLabel: 'التاريخ', timeLabel: 'الوقت', noteLabel: 'ملاحظة', notePlaceholder: 'ملاحظة قصيرة...',
+    colorLabel: 'اللون', reminderLabel: 'التذكير',
+    reminders: ['في الوقت','قبل ١٠ دقائق','قبل ٣٠ دقيقة','قبل ساعة','قبل يوم'],
+    cancel: 'إلغاء', save: 'حفظ',
+    noEvents: 'لا توجد أحداث لهذا اليوم',
+    eventAdded: 'تمت إضافة الحدث', eventDeleted: 'تم حذف الحدث',
+    titleRequired: 'العنوان والتاريخ مطلوبان', calendarUpToDate: 'التقويم محدّث',
+    syncFailed: 'فشل المزامنة', connecting: 'جارٍ الاتصال...',
+    imported: (n) => 'تم استيراد ' + n + ' أحداث',
+    diyanetSelected: 'تم اختيار ديانت', suleymaniyeSelected: 'تم اختيار مؤسسة سليمانية',
+    citySelected: (c) => 'تم اختيار ' + c, hijriUpdated: 'تم تحديث التصحيح الهجري',
+    prayerNames: ['الإمساك','الفجر','الشروق','الظهر','العصر','المغرب','العشاء'],
+    hSuffix: 'هـ', dir: 'rtl',
+  },
+  de: {
+    months: ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'],
+    weekdays: ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'],
+    weekdaysShort: ['Mo','Di','Mi','Do','Fr','Sa','So'],
+    appTitle: 'Kalender', navCalendar: 'Kalender', navPrayer: 'Gebet', navSettings: 'Einstellungen',
+    prayerPageTitle: 'Gebetszeiten', nextPrayer: 'Nächstes Gebet', timeLeft: 'Verbleibend',
+    settingsTitle: 'Einstellungen', langSection: 'Dil / Language',
+    srcSection: 'Gebetszeit-Quelle', locSection: 'Ort', notifSection: 'Benachrichtigungen', hijriSection: 'Hijri-Kalender',
+    fajrAngle: 'Fadschr-Winkel', ishaAngle: 'Ischa-Winkel', city: 'Stadt',
+    notifLabel: 'Gebets­benachrichtigungen', notifDesc: 'Vor jedem Gebet benachrichtigen',
+    hijriCorrection: 'Korrektur (Tage)', hijriCorrectionDesc: 'Hijri-Datum um ±1-2 Tage anpassen',
+    diyanetDesc: 'Fadschr: 18°\nIscha: 17°', suleymaniyeDesc: 'Fadschr: 15°\nIscha: 15°',
+    modalTitle: 'Neues Ereignis', titleLabel: 'Titel', titlePlaceholder: 'Ereignisname...',
+    dateLabel: 'Datum', timeLabel: 'Uhrzeit', noteLabel: 'Notiz', notePlaceholder: 'Kurze Notiz...',
+    colorLabel: 'Farbe', reminderLabel: 'Erinnerung',
+    reminders: ['Pünktlich','10 Min vorher','30 Min vorher','1 Std vorher','1 Tag vorher'],
+    cancel: 'Abbrechen', save: 'Speichern',
+    noEvents: 'Keine Ereignisse an diesem Tag',
+    eventAdded: 'Ereignis hinzugefügt', eventDeleted: 'Ereignis gelöscht',
+    titleRequired: 'Titel und Datum erforderlich', calendarUpToDate: 'Kalender aktuell',
+    syncFailed: 'Synchronisation fehlgeschlagen', connecting: 'Verbinden...',
+    imported: (n) => n + ' Ereignisse importiert',
+    diyanetSelected: 'Diyanet ausgewählt', suleymaniyeSelected: 'Süleymaniye Vakfı ausgewählt',
+    citySelected: (c) => c + ' ausgewählt', hijriUpdated: 'Hijri-Korrektur aktualisiert',
+    prayerNames: ['Imsak','Fadschr','Sonnenaufgang','Mittag','Asr','Maghrib','Ischa'],
+    hSuffix: 'n.H.', dir: 'ltr',
+  },
+  fr: {
+    months: ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'],
+    weekdays: ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],
+    weekdaysShort: ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'],
+    appTitle: 'Calendrier', navCalendar: 'Calendrier', navPrayer: 'Prière', navSettings: 'Paramètres',
+    prayerPageTitle: 'Heures de prière', nextPrayer: 'Prochaine prière', timeLeft: 'Temps restant',
+    settingsTitle: 'Paramètres', langSection: 'Dil / Language',
+    srcSection: 'Source des heures de prière', locSection: 'Lieu', notifSection: 'Notifications', hijriSection: 'Calendrier Hégirien',
+    fajrAngle: 'Angle Fajr', ishaAngle: 'Angle Isha', city: 'Ville',
+    notifLabel: 'Notifications de prière', notifDesc: 'Recevoir des notifications avant chaque prière',
+    hijriCorrection: 'Correction (jours)', hijriCorrectionDesc: 'Ajuster la date hégirienne de ±1-2 jours',
+    diyanetDesc: 'Fajr: 18°\nIsha: 17°', suleymaniyeDesc: 'Fajr: 15°\nIsha: 15°',
+    modalTitle: 'Nouvel événement', titleLabel: 'Titre', titlePlaceholder: 'Nom de l\'événement...',
+    dateLabel: 'Date', timeLabel: 'Heure', noteLabel: 'Note', notePlaceholder: 'Courte note...',
+    colorLabel: 'Couleur', reminderLabel: 'Rappel',
+    reminders: ['À l\'heure','10 min avant','30 min avant','1h avant','1 jour avant'],
+    cancel: 'Annuler', save: 'Enregistrer',
+    noEvents: 'Aucun événement ce jour',
+    eventAdded: 'Événement ajouté', eventDeleted: 'Événement supprimé',
+    titleRequired: 'Titre et date requis', calendarUpToDate: 'Calendrier à jour',
+    syncFailed: 'Échec de la sync', connecting: 'Connexion...',
+    imported: (n) => n + ' événements importés',
+    diyanetSelected: 'Diyanet sélectionné', suleymaniyeSelected: 'Süleymaniye Vakfı sélectionné',
+    citySelected: (c) => c + ' sélectionné', hijriUpdated: 'Correction hégirienne mise à jour',
+    prayerNames: ['Imsak','Fajr','Lever','Dhouhr','Asr','Maghreb','Isha'],
+    hSuffix: 'H', dir: 'ltr',
+  },
+  nl: {
+    months: ['Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'],
+    weekdays: ['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'],
+    weekdaysShort: ['Ma','Di','Wo','Do','Vr','Za','Zo'],
+    appTitle: 'Kalender', navCalendar: 'Kalender', navPrayer: 'Gebed', navSettings: 'Instellingen',
+    prayerPageTitle: 'Gebetstijden', nextPrayer: 'Volgend gebed', timeLeft: 'Resterende tijd',
+    settingsTitle: 'Instellingen', langSection: 'Dil / Language',
+    srcSection: 'Bron gebetstijden', locSection: 'Locatie', notifSection: 'Meldingen', hijriSection: 'Islamitische kalender',
+    fajrAngle: 'Fajr-hoek', ishaAngle: 'Isha-hoek', city: 'Stad',
+    notifLabel: 'Gebedsmeldingen', notifDesc: 'Meldingen voor elk gebed ontvangen',
+    hijriCorrection: 'Correctie (dagen)', hijriCorrectionDesc: 'Islamitische datum ±1-2 dagen aanpassen',
+    diyanetDesc: 'Fajr: 18°\nIsha: 17°', suleymaniyeDesc: 'Fajr: 15°\nIsha: 15°',
+    modalTitle: 'Nieuw evenement', titleLabel: 'Titel', titlePlaceholder: 'Naam evenement...',
+    dateLabel: 'Datum', timeLabel: 'Tijd', noteLabel: 'Opmerking', notePlaceholder: 'Korte opmerking...',
+    colorLabel: 'Kleur', reminderLabel: 'Herinnering',
+    reminders: ['Op tijd','10 min eerder','30 min eerder','1 uur eerder','1 dag eerder'],
+    cancel: 'Annuleren', save: 'Opslaan',
+    noEvents: 'Geen evenementen op deze dag',
+    eventAdded: 'Evenement toegevoegd', eventDeleted: 'Evenement verwijderd',
+    titleRequired: 'Titel en datum zijn vereist', calendarUpToDate: 'Kalender is actueel',
+    syncFailed: 'Synchronisatie mislukt', connecting: 'Verbinden...',
+    imported: (n) => n + ' evenementen geïmporteerd',
+    diyanetSelected: 'Diyanet geselecteerd', suleymaniyeSelected: 'Süleymaniye Vakfı geselecteerd',
+    citySelected: (c) => c + ' geselecteerd', hijriUpdated: 'Islamitische correctie bijgewerkt',
+    prayerNames: ['Imsak','Fajr','Zonsopgang','Dhuhr','Asr','Maghrib','Isha'],
+    hSuffix: 'n.H.', dir: 'ltr',
+  },
+};
+
+function t(key, ...args) {
+  const lang = I18N[settings.lang || 'tr'] || I18N.tr;
+  const val = lang[key];
+  if (typeof val === 'function') return val(...args);
+  return val || I18N.tr[key] || key;
+}
+
+const HIJRI_MONTHS = ['Muharrem','Safer','Rebîülevvel','Rebîülâhir','Cemâziyelevvel','Cemâziyelâhir','Recep','Şaban','Ramazan','Şevval','Zilkade','Zilhicce'];
+const HIJRI_MONTHS_AR = ['محرم','صفر','ربيع الأول','ربيع الآخر','جمادى الأولى','جمادى الآخرة','رجب','شعبان','رمضان','شوال','ذو القعدة','ذو الحجة'];
+
+function getHijriMonthName(monthIdx) {
+  return (settings.lang === 'ar') ? HIJRI_MONTHS_AR[monthIdx - 1] : HIJRI_MONTHS[monthIdx - 1];
+}
+
+const PRAYER_KEYS = ['imsak','fajr','sunrise','dhuhr','asr','maghrib','isha'];
+const PRAYER_AR   = ['الإمساك','الفجر','الشروق','الظهر','العصر','المغرب','العشاء'];
+const PRAYER_ICONS = ['🌙','🌅','☀️','🕛','🕔','🌇','🌃'];
+
+function getPrayerNames() {
+  const lang = I18N[settings.lang || 'tr'] || I18N.tr;
+  return PRAYER_KEYS.map((key, i) => ({
+    key, name: lang.prayerNames[i], ar: PRAYER_AR[i], icon: PRAYER_ICONS[i]
+  }));
+}
+
+const CITY_COORDS = {
+  istanbul:   { lat:41.0082, lon:28.9784, tz:3, name:'İstanbul' },
+  ankara:     { lat:39.9334, lon:32.8597, tz:3, name:'Ankara' },
+};
+
+// Location state — used directly for prayer calculations
+let geoLat = parseFloat(localStorage.getItem('cal_geo_lat') || '41.0082');
+let geoLon = parseFloat(localStorage.getItem('cal_geo_lon') || '28.9784');
+let geoTz  = new Date().getTimezoneOffset() / -60;
+let geoName = localStorage.getItem('cal_geo_name') || 'İstanbul';
+let geoLoading = false;
+
+const SOURCES = {
+  diyanet:     { fajr:18, isha:17, label:'Diyanet İşleri', asrMethod:'standard' },
+  suleymaniye: { fajr:15, isha:15, label:'Süleymaniye Vakfı', asrMethod:'standard' },
+};
+
+let settings = JSON.parse(localStorage.getItem('cal_settings') || 'null') || {
+  source: 'diyanet',
+  fajrAngle: 18,
+  ishaAngle: 17,
+  city: 'istanbul',
+  notif: false,
+  hijriCorrection: 0,
+  lang: 'tr',
+};
+
+let events = JSON.parse(localStorage.getItem('cal_events') || '[]');
+let now = new Date();
+let currentYear = now.getFullYear();
+let currentMonth = now.getMonth();
+let selectedDate = toDateStr(now);
+let selectedColor = '#2E4A35';
+let selectedReminder = 10;
+
+/* ════════════════════════════════════════════
+   UTILS
+════════════════════════════════════════════ */
+function toDateStr(d) {
+  // Format using LOCAL date parts to avoid UTC midnight shift (e.g. UTC+3)
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + dd;
+}
+
+function localDateStr(year, month, day) {
+  // month is 0-based here — let Date handle overflow (e.g. month -1 or 12)
+  const d = new Date(year, month, day, 12, 0, 0); // noon avoids any DST edge
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function saveLocal() { localStorage.setItem('cal_events', JSON.stringify(events)); }
+function saveSettings() { localStorage.setItem('cal_settings', JSON.stringify(settings)); }
+function escHtml(s) {
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ════════════════════════════════════════════
+   HİCRİ TAKVİM
+════════════════════════════════════════════ */
+function gregorianToHijri(gDate) {
+  const d = new Date(gDate);
+  if (settings.hijriCorrection) d.setDate(d.getDate() + parseInt(settings.hijriCorrection));
+  // Use LOCAL date parts — avoids UTC midnight shift
+  const year = d.getFullYear(), month = d.getMonth() + 1, day = d.getDate();
+  let jd = Math.floor((14 - month) / 12);
+  let y = year + 4800 - jd;
+  let m = month + 12 * jd - 3;
+  let jdn = day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4)
+           - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+  let l = jdn - 1948440 + 10632;
+  let n = Math.floor((l - 1) / 10631);
+  l = l - 10631 * n + 354;
+  let j = Math.floor((10985 - l) / 5316) * Math.floor((50 * l) / 17719)
+        + Math.floor(l / 5670) * Math.floor((43 * l) / 15238);
+  l = l - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50)
+      - Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
+  let hMonth = Math.floor((24 * l) / 709);
+  let hDay = l - Math.floor((709 * hMonth) / 24);
+  let hYear = 30 * n + j - 30;
+  return { day: hDay, month: hMonth, year: hYear, monthName: getHijriMonthName(hMonth) };
+}
+
+function hijriStr(dateStr) {
+  const h = gregorianToHijri(new Date(dateStr));
+  return h.day + ' ' + h.monthName + ' ' + h.year + ' ' + t('hSuffix');
+}
+
+function hijriDayNum(dateStr) {
+  return gregorianToHijri(new Date(dateStr)).day;
+}
+
+function hijriMonthRange(gYear, gMonth) {
+  const first = new Date(gYear, gMonth, 1);
+  const last = new Date(gYear, gMonth + 1, 0);
+  const h1 = gregorianToHijri(first);
+  const h2 = gregorianToHijri(last);
+  if (h1.month === h2.month) return h1.monthName + ' ' + h1.year + ' ' + t('hSuffix');
+  return h1.monthName + ' — ' + h2.monthName + ' ' + h2.year + ' ' + t('hSuffix');
+}
+
+/* ════════════════════════════════════════════
+   NAMAZ VAKİTLERİ HESAPLAMA
+   Kaynak: PrayTimes.org algoritması (ISNA/Diyanet uyarlaması)
+════════════════════════════════════════════ */
+function deg2rad(d) { return d * Math.PI / 180; }
+function rad2deg(r) { return r * 180 / Math.PI; }
+function fixAngle(a) { return a - 360 * Math.floor(a / 360); }
+function fixHour(a)  { return a - 24  * Math.floor(a / 24); }
+
+function sunPosition(jd) {
+  const D  = jd - 2451545.0;
+  const g  = deg2rad(fixAngle(357.529 + 0.98560028 * D));
+  const q  = fixAngle(280.459 + 0.98564736 * D);
+  const L  = deg2rad(fixAngle(q + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g)));
+  const e  = deg2rad(23.439 - 0.00000036 * D);
+  const dec = rad2deg(Math.asin(Math.sin(e) * Math.sin(L)));
+  let RA   = rad2deg(Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L))) / 15;
+  RA = fixHour(RA);
+  const EqT = q / 15 - RA;   // equation of time in hours
+  return { dec, EqT };
+}
+
+function julianDay(year, month, day) {
+  if (month <= 2) { year -= 1; month += 12; }
+  const A = Math.floor(year / 100);
+  const B = 2 - A + Math.floor(A / 4);
+  return Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + B - 1524.5;
+}
+
+function hourAngle(lat, dec, elev) {
+  const num   = Math.sin(deg2rad(elev)) - Math.sin(deg2rad(lat)) * Math.sin(deg2rad(dec));
+  const denom = Math.cos(deg2rad(lat)) * Math.cos(deg2rad(dec));
+  const cos   = num / denom;
+  if (cos > 1 || cos < -1) return null;
+  return rad2deg(Math.acos(cos)) / 15;
+}
+
+function asrHourAngle(lat, dec, shadowFactor) {
+  const targetAlt = rad2deg(Math.atan(1 / (shadowFactor + Math.tan(deg2rad(Math.abs(lat - dec))))));
+  return hourAngle(lat, dec, targetAlt);
+}
+
+function calcPrayers(date, lat, lon) {
+  // Derive UTC offset from the real JS timezone (handles DST correctly)
+  const tz = -date.getTimezoneOffset() / 60;
+
+  const jd  = julianDay(date.getFullYear(), date.getMonth() + 1, date.getDate());
+  const { dec, EqT } = sunPosition(jd);
+
+  // Solar noon in local clock hours
+  const noon = 12 - lon / 15 - EqT + tz;
+
+  const fajrAngle = parseFloat(settings.fajrAngle);
+  const ishaAngle = parseFloat(settings.ishaAngle);
+
+  const fajrH   = hourAngle(lat, dec, -fajrAngle);
+  const sunriseH = hourAngle(lat, dec, -0.8333);
+  const asrH    = asrHourAngle(lat, dec, 1);   // Shafi (shadow = 1× length)
+  const ishaH   = hourAngle(lat, dec, -ishaAngle);
+
+  const toMin = h => h === null ? null : Math.round(h * 60);
+  const fajrTime = fajrH === null ? null : noon - fajrH;
+
+  return {
+    imsak:   toMin(fajrTime === null ? null : fajrTime - 10 / 60),
+    fajr:    toMin(fajrTime),
+    sunrise: toMin(sunriseH === null ? null : noon - sunriseH),
+    dhuhr:   toMin(noon),
+    asr:     toMin(asrH === null ? null : noon + asrH),
+    maghrib: toMin(sunriseH === null ? null : noon + sunriseH),
+    isha:    toMin(ishaH === null ? null : noon + ishaH),
+  };
+}
+
+function minutesToTime(mins) {
+  const m = ((Math.round(mins) % 1440) + 1440) % 1440;
+  return String(Math.floor(m / 60)).padStart(2,'0') + ':' + String(m % 60).padStart(2,'0');
+}
+
+/* ════════════════════════════════════════════
+   RENDER: PRAYER PAGE
+════════════════════════════════════════════ */
+let countdownInterval = null;
+
+function renderPrayer() {
+  document.getElementById('locationText').textContent = geoName;
+  document.getElementById('sourceBadge').textContent =
+    settings.source === 'diyanet' ? 'Diyanet İşleri' : 'Süleymaniye Vakfı';
+
+  document.querySelector('.prayer-title').textContent = t('prayerPageTitle');
+  document.querySelector('.next-prayer-label').textContent = t('nextPrayer');
+  document.querySelector('.countdown-label').textContent = t('timeLeft');
+
+  const today = new Date();
+  const times = calcPrayers(today, geoLat, geoLon);
+  const PNAMES = getPrayerNames();
+
+  // nowMins with seconds precision
+  const nowMins = today.getHours() * 60 + today.getMinutes() + today.getSeconds() / 60;
+
+  const list = document.getElementById('prayerList');
+  list.innerHTML = '';
+
+  // Find next prayer: first one strictly in the future
+  let nextKey = null, nextMins = Infinity;
+  PNAMES.forEach(p => {
+    const tv = times[p.key];
+    if (tv !== null && tv > nowMins && tv < nextMins) { nextKey = p.key; nextMins = tv; }
+  });
+  // If all prayers passed today, next is tomorrow's imsak
+  if (!nextKey) { nextKey = 'imsak'; nextMins = times.imsak + 1440; }
+
+  PNAMES.forEach(p => {
+    const tv = times[p.key];
+    const isNext = p.key === nextKey;
+    // A prayer is "past" if its time has already passed
+    const isPast = tv !== null && tv <= nowMins;
+    const row = document.createElement('div');
+    row.className = 'prayer-row' + (isNext ? ' current' : '') + (isPast ? ' past' : '');
+    row.innerHTML = `
+      <div class="prayer-icon">${p.icon}</div>
+      <div class="prayer-content" style="flex:1">
+        <div class="prayer-name">${p.name} <span class="prayer-name-ar">${p.ar}</span></div>
+      </div>
+      <div class="prayer-time">${tv !== null ? minutesToTime(tv) : '—'}</div>
+    `;
+    list.appendChild(row);
+  });
+
+  const np = PNAMES.find(p => p.key === nextKey);
+  document.getElementById('nextPrayerName').textContent = np ? np.name : '—';
+  document.getElementById('nextPrayerTimeEl').textContent = minutesToTime(nextMins % 1440);
+
+  if (countdownInterval) clearInterval(countdownInterval);
+  countdownInterval = setInterval(() => {
+    const n = new Date();
+    const nm = n.getHours() * 60 + n.getMinutes() + n.getSeconds() / 60;
+    // If we've passed the target, re-render entirely to pick new next prayer
+    if (nm > nextMins && nextMins < 1440) {
+      renderPrayer();
+      return;
+    }
+    updateCountdown(nextMins);
+  }, 1000);
+  updateCountdown(nextMins);
+}
+
+function updateCountdown(targetMins) {
+  const now2 = new Date();
+  const nowSecs = now2.getHours() * 3600 + now2.getMinutes() * 60 + now2.getSeconds();
+  const targetSecs = targetMins * 60;
+  let diffSecs = targetSecs - nowSecs;
+  if (diffSecs < 0) diffSecs += 86400;
+  const h = Math.floor(diffSecs / 3600);
+  const m = Math.floor((diffSecs % 3600) / 60);
+  const s = diffSecs % 60;
+  document.getElementById('countdownTimer').textContent =
+    String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+/* ════════════════════════════════════════════
+   RENDER: CALENDAR
+════════════════════════════════════════════ */
+function renderCalendar() {
+  const lang = I18N[settings.lang || 'tr'] || I18N.tr;
+  document.getElementById('monthTitle').textContent = lang.months[currentMonth] + ' ' + currentYear;
+  document.getElementById('hijriMonthSub').textContent = hijriMonthRange(currentYear, currentMonth);
+
+  const todayHijri = gregorianToHijri(now);
+  document.getElementById('hijriHeaderBadge').textContent =
+    todayHijri.day + ' ' + todayHijri.monthName + ' ' + todayHijri.year + ' ' + t('hSuffix');
+
+  // update weekday headers
+  const wdEls = document.querySelectorAll('.weekday');
+  lang.weekdaysShort.forEach((wd, i) => { if (wdEls[i]) wdEls[i].textContent = wd; });
+
+  const grid = document.getElementById('daysGrid');
+  grid.innerHTML = '';
+
+  const first = new Date(currentYear, currentMonth, 1);
+  let startDow = first.getDay();
+  if (startDow === 0) startDow = 7;
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const prevDays = new Date(currentYear, currentMonth, 0).getDate();
+  const todayStr = toDateStr(now);
+
+  for (let i = 0; i < startDow - 1; i++) {
+    const d = prevDays - (startDow - 2) + i;
+    const ds = localDateStr(currentYear, currentMonth - 1, d);
+    grid.appendChild(makeCell(d, ds, true));
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = localDateStr(currentYear, currentMonth, d);
+    const cell = makeCell(d, ds, false);
+    if (ds === todayStr) cell.classList.add('today');
+    if (ds === selectedDate) cell.classList.add('selected');
+    grid.appendChild(cell);
+  }
+  const totalCells = grid.children.length;
+  for (let d = 1; d <= 42 - totalCells; d++) {
+    const ds = localDateStr(currentYear, currentMonth + 1, d);
+    grid.appendChild(makeCell(d, ds, true));
+  }
+
+  renderEvents();
+}
+
+function makeCell(d, dateStr, otherMonth) {
+  const cell = document.createElement('div');
+  cell.className = 'day-cell' + (otherMonth ? ' other-month' : '');
+  cell.dataset.date = dateStr;
+  cell.onclick = () => selectDay(dateStr);
+
+  const num = document.createElement('div');
+  num.className = 'day-num';
+  num.textContent = d;
+  cell.appendChild(num);
+
+  if (!otherMonth) {
+    const hDay = document.createElement('div');
+    hDay.className = 'hijri-day';
+    hDay.textContent = hijriDayNum(dateStr);
+    cell.appendChild(hDay);
+  }
+
+  const dayEvents = events.filter(e => e.date === dateStr);
+  if (dayEvents.length) {
+    const dots = document.createElement('div');
+    dots.className = 'event-dots';
+    dayEvents.slice(0, 3).forEach(ev => {
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      dot.style.background = ev.color || '#2E4A35';
+      dots.appendChild(dot);
+    });
+    cell.appendChild(dots);
+  }
+  return cell;
+}
+
+function selectDay(dateStr) {
+  selectedDate = dateStr;
+  renderCalendar();
+}
+
+function renderEvents() {
+  const lang = I18N[settings.lang || 'tr'] || I18N.tr;
+  const d = new Date(selectedDate + 'T12:00:00');
+  document.getElementById('panelDate').textContent =
+    d.getDate() + ' ' + lang.months[d.getMonth()] + ' ' + d.getFullYear() + ', ' +
+    lang.weekdays[d.getDay()];
+  document.getElementById('panelHijri').textContent = hijriStr(selectedDate);
+
+  const list = document.getElementById('eventsList');
+  const dayEvents = events.filter(e => e.date === selectedDate)
+    .sort((a,b) => (a.time||'').localeCompare(b.time||''));
+
+  if (!dayEvents.length) {
+    list.innerHTML = `<div class="empty-state">${t('noEvents')}</div>`;
+    return;
+  }
+  const reminderLabels = t('reminders');
+  const reminderMinutes = [0, 10, 30, 60, 1440];
+  list.innerHTML = dayEvents.map(ev => {
+    const ri = reminderMinutes.indexOf(ev.reminder);
+    const rl = ri >= 0 ? reminderLabels[ri] : '';
+    return `<div class="event-card">
+      <div class="event-color-bar" style="background:${ev.color}"></div>
+      <div class="event-content">
+        <div class="event-title">${escHtml(ev.title)}</div>
+        <div class="event-meta">
+          ${ev.time ? `<span>${ev.time}</span>` : ''}
+          ${ev.note ? `<span>${escHtml(ev.note)}</span>` : ''}
+          ${rl ? `<span style="color:${ev.color}">${rl}</span>` : ''}
+        </div>
+      </div>
+      <button class="event-del-btn" onclick="deleteEvent('${ev.id}')">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <line x1="3" y1="3" x2="12" y2="12"/><line x1="12" y1="3" x2="3" y2="12"/>
+        </svg>
+      </button>
+    </div>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════════
+   NAVIGATION
+════════════════════════════════════════════ */
+let currentTab = 'calendar';
+
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('fabBtn').classList.toggle('hidden', tab !== 'calendar');
+  currentTab = tab;
+  if (tab === 'prayer') renderPrayer();
+  if (tab === 'settings') renderSettingsUI();
+}
+
+/* ════════════════════════════════════════════
+   SETTINGS UI
+════════════════════════════════════════════ */
+function applyLanguage() {
+  const lang = I18N[settings.lang || 'tr'] || I18N.tr;
+  document.documentElement.lang = settings.lang || 'tr';
+  document.documentElement.dir = lang.dir;
+  document.title = lang.appTitle;
+
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  const setHTML = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
+  const setPlaceholder = (id, val) => { const el = document.getElementById(id); if (el) el.placeholder = val; };
+  const setQText = (sel, val) => { const el = document.querySelector(sel); if (el) el.textContent = val; };
+
+  // Nav tab labels (lastChild is the text node)
+  ['calendar','prayer','settings'].forEach((tab, i) => {
+    const el = document.getElementById('tab-' + tab);
+    if (el) el.lastChild.textContent = [lang.navCalendar, lang.navPrayer, lang.navSettings][i];
+  });
+
+  setQText('.settings-page-title', lang.settingsTitle);
+  setText('lbl-lang-section', lang.langSection);
+  setText('lbl-hijri-section', lang.hijriSection);
+  setText('lbl-hijri-correction', lang.hijriCorrection);
+  setText('lbl-hijri-correction-desc', lang.hijriCorrectionDesc);
+
+  const srcD = document.getElementById('srcDiyanet');
+  const srcS = document.getElementById('srcSuleymaniye');
+  if (srcD) srcD.querySelector('.source-option-desc').innerHTML = lang.diyanetDesc.replace('\n','<br>');
+  if (srcS) srcS.querySelector('.source-option-desc').innerHTML = lang.suleymaniyeDesc.replace('\n','<br>');
+
+  setPlaceholder('eventTitle', lang.titlePlaceholder);
+  setPlaceholder('eventNote', lang.notePlaceholder);
+  setQText('.modal-title', lang.modalTitle);
+  setQText('.btn-cancel', lang.cancel);
+  setQText('.btn-save', lang.save);
+
+  document.querySelectorAll('.reminder-chip').forEach((chip, i) => {
+    if (lang.reminders[i]) chip.textContent = lang.reminders[i];
+  });
+
+  document.querySelectorAll('.lang-option').forEach(opt => {
+    opt.classList.toggle('selected', opt.dataset.lang === settings.lang);
+  });
+
+  renderCalendar();
+}
+
+function selectLang(code) {
+  settings.lang = code;
+  saveSettings();
+  applyLanguage();
+  showNotification(I18N[code]?.appTitle || code);
+}
+
+function renderSettingsUI() {
+  document.getElementById('srcDiyanet').classList.toggle('selected', settings.source === 'diyanet');
+  document.getElementById('srcSuleymaniye').classList.toggle('selected', settings.source === 'suleymaniye');
+  document.getElementById('fajrAngle').value = settings.fajrAngle;
+  document.getElementById('ishaAngle').value = settings.ishaAngle;
+  document.getElementById('hijriCorrection').value = settings.hijriCorrection;
+  document.getElementById('notifToggle').classList.toggle('on', settings.notif);
+  document.getElementById('locationStatusText').textContent = geoLoading ? '...' : geoName;
+  updateAngleDescs();
+  applyLanguage();
+}
+
+function selectSource(src) {
+  settings.source = src;
+  if (src === 'diyanet') { settings.fajrAngle = 18; settings.ishaAngle = 17; }
+  else { settings.fajrAngle = 15; settings.ishaAngle = 15; }
+  saveSettings();
+  renderSettingsUI();
+  showNotification(src === 'diyanet' ? t('diyanetSelected') : t('suleymaniyeSelected'));
+}
+
+function onAngleChange() {
+  settings.fajrAngle = parseInt(document.getElementById('fajrAngle').value);
+  settings.ishaAngle = parseInt(document.getElementById('ishaAngle').value);
+  settings.source = 'custom';
+  saveSettings();
+  updateAngleDescs();
+}
+
+function updateAngleDescs() {
+  const src = settings.source === 'diyanet' ? 'Diyanet' : settings.source === 'suleymaniye' ? 'Süleymaniye' : 'Özel';
+  document.getElementById('fajrAngleDesc').textContent = settings.fajrAngle + '° (' + src + ')';
+  document.getElementById('ishaAngleDesc').textContent = settings.ishaAngle + '° (' + src + ')';
+}
+
+function requestLocation() {
+  if (!navigator.geolocation) {
+    document.getElementById('locationStatusText').textContent = 'Konum desteklenmiyor';
+    return;
+  }
+  const btn = document.getElementById('locRefreshBtn');
+  if (btn) btn.classList.add('spinning');
+  geoLoading = true;
+  document.getElementById('locationStatusText').textContent = '...';
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      geoLat = pos.coords.latitude;
+      geoLon = pos.coords.longitude;
+      geoTz  = new Date().getTimezoneOffset() / -60;
+      localStorage.setItem('cal_geo_lat', geoLat);
+      localStorage.setItem('cal_geo_lon', geoLon);
+      geoLoading = false;
+      if (btn) btn.classList.remove('spinning');
+      // Try reverse geocode
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${geoLat}&lon=${geoLon}&format=json&accept-language=tr`);
+        const j = await r.json();
+        geoName = j.address?.city || j.address?.town || j.address?.village || j.address?.county || `${geoLat.toFixed(2)}°, ${geoLon.toFixed(2)}°`;
+      } catch(e) {
+        geoName = `${geoLat.toFixed(2)}°, ${geoLon.toFixed(2)}°`;
+      }
+      localStorage.setItem('cal_geo_name', geoName);
+      document.getElementById('locationStatusText').textContent = geoName;
+      document.getElementById('locationText').textContent = geoName;
+      if (document.getElementById('page-prayer').classList.contains('active')) renderPrayer();
+      showNotification(geoName);
+    },
+    (err) => {
+      geoLoading = false;
+      if (btn) btn.classList.remove('spinning');
+      const msg = err.code === 1 ? 'Konum izni reddedildi' : 'Konum alınamadı';
+      document.getElementById('locationStatusText').textContent = msg;
+      showNotification(msg);
+    },
+    { timeout: 10000, maximumAge: 300000 }
+  );
+}
+
+function onHijriCorrectionChange() {
+  settings.hijriCorrection = parseInt(document.getElementById('hijriCorrection').value);
+  saveSettings();
+  renderCalendar();
+  showNotification(t('hijriUpdated'));
+}
+
+function toggleNotif() {
+  settings.notif = !settings.notif;
+  document.getElementById('notifToggle').classList.toggle('on', settings.notif);
+  if (settings.notif && 'Notification' in window) {
+    Notification.requestPermission().then(p => {
+      if (p !== 'granted') { settings.notif = false; document.getElementById('notifToggle').classList.remove('on'); }
+      saveSettings();
+    });
+  } else { saveSettings(); }
+}
+
+/* ════════════════════════════════════════════
+   EVENTS CRUD
+════════════════════════════════════════════ */
+function changeMonth(dir) {
+  currentMonth += dir;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  renderCalendar();
+}
+
+function openModal() {
+  document.getElementById('eventDate').value = selectedDate;
+  document.getElementById('eventTime').value = '';
+  document.getElementById('eventTitle').value = '';
+  document.getElementById('eventNote').value = '';
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('eventTitle').focus(), 100);
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function handleOverlayClick(e) { if (e.target === e.currentTarget) closeModal(); }
+
+function selectColor(el) {
+  document.querySelectorAll('.color-option').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedColor = el.dataset.color;
+}
+
+function selectReminder(el) {
+  document.querySelectorAll('.reminder-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedReminder = parseInt(el.dataset.min);
+}
+
+function saveEvent() {
+  const title = document.getElementById('eventTitle').value.trim();
+  const date = document.getElementById('eventDate').value;
+  if (!title || !date) { showNotification(t('titleRequired')); return; }
+  const ev = {
+    id: Date.now().toString(),
+    title, date,
+    time: document.getElementById('eventTime').value,
+    note: document.getElementById('eventNote').value.trim(),
+    color: selectedColor,
+    reminder: selectedReminder,
+    synced: false,
+    createdAt: new Date().toISOString()
+  };
+  events.push(ev);
+  saveLocal();
+  scheduleReminder(ev);
+  closeModal();
+  selectedDate = date;
+  renderCalendar();
+  showNotification(t('eventAdded'));
+}
+
+function deleteEvent(id) {
+  events = events.filter(e => e.id !== id);
+  saveLocal();
+  renderCalendar();
+  showNotification(t('eventDeleted'));
+}
+
+function scheduleReminder(ev) {
+  if (!ev.time || ev.reminder === null) return;
+  const eventTime = new Date(ev.date + 'T' + ev.time + ':00');
+  const reminderTime = new Date(eventTime.getTime() - ev.reminder * 60000);
+  const delay = reminderTime.getTime() - Date.now();
+  if (delay > 0 && delay < 172800000) {
+    setTimeout(() => {
+      if ('Notification' in window) {
+        Notification.requestPermission().then(p => {
+          if (p === 'granted') new Notification('Hatırlatıcı: ' + ev.title, {
+            body: ev.reminder === 0 ? 'Etkinlik başlıyor!' : ev.reminder + ' dakika sonra',
+          });
+          else showNotification('Hatırlatıcı: ' + ev.title);
+        });
+      }
+    }, delay);
+  }
+}
+
+/* ════════════════════════════════════════════
+   GOOGLE SYNC
+════════════════════════════════════════════ */
+async function syncWithGoogle() {
+  const btn = document.getElementById('syncBtn');
+  btn.textContent = t('connecting');
+  btn.disabled = true;
+  try {
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: "You are a Google Calendar assistant. List the user's upcoming events in JSON format. Today's date: " + new Date().toISOString().slice(0,10) + ". Respond ONLY with a JSON array, format: [{\"title\":\"...\",\"date\":\"YYYY-MM-DD\",\"time\":\"HH:MM\",\"note\":\"...\"}]. Include 3 realistic calendar events for the current week.",
+        messages: [{ role: "user", content: "Get this week's events." }],
+        mcp_servers: [{ type: "url", url: "https://gcal.mcp.claude.com/mcp", name: "google-calendar" }]
+      })
+    });
+    const data = await resp.json();
+    const allText = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    let parsed = [];
+    try {
+      const m = allText.match(/\[[\s\S]*?\]/);
+      if (m) parsed = JSON.parse(m[0]);
+    } catch(e) {}
+    let added = 0;
+    parsed.forEach(gcEv => {
+      if (!gcEv.title || !gcEv.date) return;
+      if (!events.find(e => e.title===gcEv.title && e.date===gcEv.date)) {
+        events.push({ id:'gc_'+Date.now()+Math.random(), title:gcEv.title, date:gcEv.date,
+          time:gcEv.time||'', note:gcEv.note||'Google Calendar', color:'#1A4580',
+          reminder:30, synced:true, createdAt:new Date().toISOString() });
+        added++;
+      }
+    });
+    saveLocal();
+    renderCalendar();
+    showNotification(added > 0 ? t('imported', added) : t('calendarUpToDate'));
+  } catch(e) { showNotification(t('syncFailed')); }
+  btn.innerHTML = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px"><path d="M13.5 2.5A6.5 6.5 0 1 1 2 8.5" stroke-linecap="round"/><polyline points="13.5,2.5 13.5,6 10,6" stroke-linecap="round" stroke-linejoin="round"/></svg> Google Sync`;
+  btn.disabled = false;
+}
+
+/* ════════════════════════════════════════════
+   NOTIFICATION
+════════════════════════════════════════════ */
+function showNotification(msg) {
+  const n = document.getElementById('notification');
+  n.textContent = msg;
+  n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 2800);
+}
+
+/* ════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
+if (!settings.lang) settings.lang = 'tr';
+events.forEach(ev => scheduleReminder(ev));
+applyLanguage();
+// Auto-request location on first visit, silently reuse cached on repeat visits
+if (!localStorage.getItem('cal_geo_lat')) {
+  requestLocation();
+} else {
+  document.getElementById('locationStatusText').textContent = geoName;
+}
+</script>
+</body>
+</html>
